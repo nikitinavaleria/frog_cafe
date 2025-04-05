@@ -112,3 +112,6 @@ class TVOrder(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CartAddMultiple(BaseModel):
+    menu_items: list[int]
