@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from src.auth import router as auth_router
 from src.menu import router as menu_router
+from fastapi.security import OAuth2PasswordBearer
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
 
 app = FastAPI()
 
-@app.get("/")
-def root():
-    return {"message": "Frog Cafe API is running!"}
 
 app.include_router(auth_router)
 app.include_router(menu_router)

@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
+from jose import jwt
 import os
-from db import get_db_connection
-from schemas import LoginRequest, TokenResponse
+from src.dependencies import get_current_user
+
+from src.db import get_db_connection
+from src.schemas import TokenResponse
 
 router = APIRouter()
 
@@ -12,13 +14,14 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", 30))
 
+
 @router.post("/auth/login", response_model=TokenResponse)
-def login(request: LoginRequest):
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT * FROM frog_cafe.Users WHERE Name = %s AND Pass = %s",
-        (request.username, request.password)
+        "SELECT * FROM frog_cafe.users WHERE name = %s AND pass = %s",
+        (form_data.username, form_data.password)
     )
     user = cur.fetchone()
     cur.close()
@@ -37,3 +40,9 @@ def login(request: LoginRequest):
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
     return {"access_token": token, "token_type": "bearer"}
+
+
+
+@router.get("/auth/me")
+def read_current_user(current_user=Depends(get_current_user)):
+    return current_user

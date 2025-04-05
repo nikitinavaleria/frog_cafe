@@ -18,3 +18,9 @@ class MenuItem(BaseModel):
 
     class Config:
         orm_mode = True
+
+class MenuItemCreate(BaseModel):
+    dish_name: str
+    image: Optional[str]
+    is_available: bool = True
+    description: Optional[str]
