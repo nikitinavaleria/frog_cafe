@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
 
   frog-db:
@@ -7,17 +5,17 @@ services:
     container_name: frog-cafe-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       TZ: 'GMT+3'
       PGTZ: 'GMT+3'
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - ~/frog_cafe_data/db:/var/lib/postgresql/data:rw
     healthcheck:
-      test: pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+      test: pg_isready -U ${DB_USER} -d ${DB_NAME}
       interval: 60s
       timeout: 3s
       retries: 5

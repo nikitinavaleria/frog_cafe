@@ -48,7 +48,7 @@ def add_multiple_to_cart(order_id: int, items: CartAddMultiple, current_user=Dep
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Проверка, чей заказ
+    # Проверка владельца заказа
     cur.execute("SELECT user_id FROM frog_cafe.orders WHERE id = %s", (order_id,))
     order = cur.fetchone()
 
@@ -61,13 +61,28 @@ def add_multiple_to_cart(order_id: int, items: CartAddMultiple, current_user=Dep
     if not (is_admin or is_owner):
         raise HTTPException(status_code=403, detail="Нет доступа к заказу")
 
-    # Добавим блюда в заказ
-    values = [(order_id, menu_id) for menu_id in items.menu_items]
+    # Проверка, есть ли у каждого блюда quantity_left > 0
+    for menu_id in items.menu_items:
+        cur.execute("SELECT quantity_left FROM frog_cafe.menu WHERE id = %s", (menu_id,))
+        menu = cur.fetchone()
+        if not menu or menu["quantity_left"] <= 0:
+            raise HTTPException(status_code=400, detail=f"Блюдо {menu_id} недоступно для заказа")
 
+    # Добавляем в корзину
+    values = [(order_id, menu_id) for menu_id in items.menu_items]
     cur.executemany(
         "INSERT INTO frog_cafe.cart (order_id, menu_item) VALUES (%s, %s);",
         values
     )
+
+    # Обновляем количество и доступность
+    for menu_id in items.menu_items:
+        cur.execute("""
+            UPDATE frog_cafe.menu
+            SET quantity_left = quantity_left - 1,
+                is_available = CASE WHEN quantity_left - 1 <= 0 THEN FALSE ELSE is_available END
+            WHERE id = %s AND quantity_left > 0;
+        """, (menu_id,))
 
     conn.commit()
     cur.close()

@@ -10,21 +10,36 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+
+
 class MenuItem(BaseModel):
     id: int
     dish_name: str
     image: Optional[str]
     is_available: bool
     description: Optional[str]
+    category: Optional[str]
+    quantity_left: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class MenuItemCreate(BaseModel):
     dish_name: str
-    image: Optional[str]
+    image: Optional[str] = None
     is_available: bool = True
+    description: Optional[str] = None
+    category: Optional[str] = None
+    quantity_left: int = 10
+
+class MenuItemUpdate(BaseModel):
+    dish_name: Optional[str]
+    image: Optional[str]
+    is_available: Optional[bool]
     description: Optional[str]
+    category: Optional[str]
+    quantity_left: Optional[int]
+
 
 
 class User(BaseModel):

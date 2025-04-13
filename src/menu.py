@@ -19,34 +19,31 @@ def get_menu():
 
 
 
-@router.post(
-    "/",
-    response_model=MenuItem,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_role([0]))]
-)
+@router.post("/", response_model=MenuItem, dependencies=[Depends(require_role([0]))])
 def create_menu_item(item: MenuItemCreate):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    try:
-        cur.execute("""
-            INSERT INTO frog_cafe.menu (dish_name, image, is_available, description)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id, dish_name, image, is_available, description;
-        """, (item.dish_name, item.image, item.is_available, item.description))
+    cur.execute("""
+        INSERT INTO frog_cafe.menu 
+        (dish_name, image, is_available, description, category, quantity_left)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id, dish_name, image, is_available, description, category, quantity_left;
+    """, (
+        item.dish_name,
+        item.image,
+        item.is_available,
+        item.description,
+        item.category,
+        item.quantity_left
+    ))
 
-        new_item = cur.fetchone()
-        conn.commit()
-        return new_item
+    new_item = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return new_item
 
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail="Database error")
-
-    finally:
-        cur.close()
-        conn.close()
 
 
 
